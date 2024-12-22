@@ -3,6 +3,7 @@
 import { using } from "./ModClasses.js";
 
 using("Terraria");
+using("Terraria.ID");
 using("Microsoft.Xna.Framework");
 using("Microsoft.Xna.Framework.Graphics");
 using("Terraria.GameContent");
@@ -45,6 +46,10 @@ class WeaponOutLite {
 		);
 	};
 
+	static IS_YOYO = item => {
+		return ItemID.Sets.Yoyo[item.type];
+	};
+
 	static IS_WHIP = item => {
 		return item.summon && item.mana === 0;
 	};
@@ -83,6 +88,25 @@ class WeaponOutLite {
 	}
 
 	/**
+	 * @param {Player} player - get Player class to acess propreties
+	 * @param {GetDrawItemType} itemType - Returns ItemTypeOffSet
+	 * @returns {SpriteEffects} SpriteEffects modify of your ItemTypeOffSet
+	 */
+	static GetSpriteDirectionDrawItem(player, itemType) {
+		switch (itemType) {
+			case WeaponOutLite.ItemTypeOffSet.Large:
+				return player.direction !== 1
+					? SpriteEffects.None
+					: SpriteEffects.FlipHorizontally;
+
+			case WeaponOutLite.ItemTypeOffSet.Medium:
+				return player.direction !== 1
+					? SpriteEffects.FlipHorizontally
+					: SpriteEffects.None;
+		}
+	}
+
+	/**
 	 * @param {Player} player -  get Player class to acess propreties
 	 * @param {Item} item - verify propreties to return a scale
 	 * @returns {float} - scale modify of your ItemTypeOffSet
@@ -101,6 +125,8 @@ class WeaponOutLite {
 	static GetRotationDrawItem(player, itemType) {
 		switch (itemType) {
 			case WeaponOutLite.ItemTypeOffSet.Large:
+				return player.direction === 1 ? -Math.PI / 2 : Math.PI / 2;
+
 			case WeaponOutLite.ItemTypeOffSet.Medium:
 				return player.direction === 1 ? Math.PI / 2 : -Math.PI / 2;
 			default:
@@ -131,8 +157,8 @@ LegacyPlayerRenderer.DrawPlayerFull.hook((orig, self, camera, player) => {
 		player.HeldItem.type !== 0 && player.itemAnimation === 0;
 
 	if (PLAYER_LIFE) {
-		if (ITEM_NOT_IS_USED) {
-			if (ITEM_CAN_DRAW) {
+		if (ITEM_CAN_DRAW) {
+			if (ITEM_NOT_IS_USED) {
 				const itemType = WeaponOutLite.GetDrawItemType(player.HeldItem);
 				/**
 				 * @todo Draw Metohod
@@ -147,14 +173,16 @@ LegacyPlayerRenderer.DrawPlayerFull.hook((orig, self, camera, player) => {
 						player,
 						itemType
 					);
+					const SPRITE_DIRECTION =
+						WeaponOutLite.GetSpriteDirectionDrawItem(
+							player,
+							itemType
+						);
 					const SCALE = WeaponOutLite.GetScaleDrawItem(
 						player,
 						itemType
 					);
-					const SPRITE_DIRECTION =
-						player.direction !== 1
-							? SpriteEffects.FlipHorizontally
-							: null;
+
 					drawTexture(
 						ITEM_TEXTURE,
 						POSITION,
